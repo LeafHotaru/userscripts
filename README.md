@@ -6,7 +6,7 @@ LeafHotaru 的用户脚本集合，每个脚本独立安装、独立维护版本
 
 | 脚本 | 功能 | 安装 | 说明 |
 | --- | --- | --- | --- |
-| ChatGPT 问答与章节导航 | 长对话提问、回答和章节目录，搜索、折叠、位置提示 | [安装脚本](https://raw.githubusercontent.com/LeafHotaru/userscripts/main/scripts/chatgpt-outline/chatgpt-outline.user.js) | [使用说明](scripts/chatgpt-outline/README.md) |
+| ChatGPT 问答与章节导航 | 长对话提问、回答和章节目录，搜索、折叠、位置提示 | [Greasy Fork 安装](https://greasyfork.org/zh-CN/scripts/602151) | [使用说明](scripts/chatgpt-outline/README.md) |
 
 ## 安装
 
@@ -14,7 +14,7 @@ LeafHotaru 的用户脚本集合，每个脚本独立安装、独立维护版本
 2. 点击上表的安装链接，并在脚本管理器中确认安装。
 3. 打开或刷新目标网站。
 
-安装链接用于公开仓库；仓库为私有时，其他用户无法通过链接安装或自动更新。当前尚未发布到 Greasy Fork。
+GPT 大纲脚本已发布到 Greasy Fork，推荐使用上表的 Greasy Fork 入口安装。源码及开发版本保留在本仓库。
 
 ## 目录约定
 

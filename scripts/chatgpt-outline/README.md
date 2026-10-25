@@ -1,10 +1,12 @@
 # ChatGPT 问答与章节导航
 
-为 ChatGPT 长对话增加可搜索的问答与章节目录。当前版本：**1.2.1**。
+为 ChatGPT 长对话增加可搜索的问答与章节目录。当前版本：**1.3.0**。
 
-[安装脚本](https://raw.githubusercontent.com/LeafHotaru/userscripts/main/scripts/chatgpt-outline/chatgpt-outline.user.js) · [反馈问题](https://github.com/LeafHotaru/userscripts/issues)
+[Greasy Fork 安装](https://greasyfork.org/zh-CN/scripts/602151) · [反馈问题](https://github.com/LeafHotaru/userscripts/issues)
 
-安装链接需要仓库公开；也可将本目录 `.user.js` 文件的完整内容复制到脚本管理器中新建脚本并保存。
+[English documentation](README.en.md)
+
+界面语言优先跟随 ChatGPT 页面语言；页面未指定语言时跟随浏览器。中文显示中文，其他语言显示英文。更改 ChatGPT 语言后刷新页面生效。
 
 ## 功能
 
@@ -34,9 +36,15 @@
 - 仅索引已载入或浏览过的消息；更早的历史需向上滚动加载。
 - 虚拟化页面可能暂时卸载消息，需重新加载后再跳转。
 - 依赖 ChatGPT 页面 DOM，网站更新可能影响识别；Dot 识别也依赖页面结构。
-- 当前初始化只检查 JavaScript 语法，未重新进行真实页面兼容性测试。
+- 已做语法与模拟 DOM 回归检查；未在登录后的真实 ChatGPT 页面进行兼容性实测。
 
 ## 版本记录
+
+### 1.3.0
+
+- 新增英文界面：按钮、搜索、统计、提示及无障碍标签。
+- 新增英文脚本名称、描述与文档，保留原有脚本标识和配置。
+- 根据页面语言自动选择中文或英文，不翻译对话正文。
 
 ### 1.2.1
 

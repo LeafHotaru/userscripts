@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         ChatGPT 问答与章节导航
+// @name:en      ChatGPT Conversation Outline
+// @description:en  Navigate long ChatGPT conversations with a searchable outline of questions, answers, and headings.
 // @namespace    local.chatgpt.history-navigator
-// @version      1.2.1
+// @version      1.3.0
 // @description  为 ChatGPT 长对话增加提问、回答和章节目录，支持搜索、折叠及当前位置提示。
 // @match        https://chatgpt.com/*
 // @match        https://chat.openai.com/*
@@ -39,6 +41,41 @@
   const HOST_ID = 'cgn-history-navigator';
   if (document.getElementById(HOST_ID)) return;
 
+  // Prefer the ChatGPT UI language; fall back to the browser when it is absent.
+  // Language is chosen on page load. Refresh after changing ChatGPT's language.
+  const languageTag = document.documentElement.lang.trim() || navigator.language || 'en';
+  const language = /^zh(?:-|_|$)/i.test(languageTag) ? 'zh' : 'en';
+  const EN = {
+    "ChatGPT 问答与章节导航": "ChatGPT Conversation Outline",
+    "问答导航": "Conversation outline",
+    "ChatGPT 问答与章节导航 v1.3.0": "ChatGPT Conversation Outline v1.3.0",
+    "切换导航栏位置": "Move outline to the other side",
+    "收起导航栏": "Collapse outline",
+    "搜索提问或章节": "Search questions or headings",
+    "目录显示范围": "Outline scope",
+    "问答章节": "All headings",
+    "仅提问": "Questions only",
+    "对话目录": "Conversation outline",
+    "更早消息": "Earlier",
+    "滚动到已载入消息的开头，以触发页面加载更早消息": "Go to the first loaded message to load earlier history",
+    "请先打开一个对话。": "Open a conversation first.",
+    "最新": "Latest",
+    "跳到最新已载入的消息": "Go to the latest loaded message",
+    "刷新": "Refresh",
+    "重新读取当前页面目录": "Refresh the outline",
+    "仅索引已载入/浏览过的消息；向上滚动可补充更早历史。": "Only loaded or previously viewed messages are indexed. Scroll up to load earlier history.",
+    "☰ 目录": "☰ Outline",
+    "打开问答导航（Alt+Shift+O）": "Open conversation outline (Alt+Shift+O)",
+    "图片 / 附件提问": "Image / attachment question",
+    "展开回答章节": "Expand answer headings",
+    "折叠回答章节": "Collapse answer headings",
+    "没有匹配的提问或章节": "No matching questions or headings",
+    "打开对话后，这里会显示提问和回答章节。": "Open a conversation to see its questions and answer headings here.",
+    "这条消息暂未挂载，请向上滚动加载历史后再点击。": "This message is not loaded. Scroll up to load its history, then try again.",
+    "回答": "Answer"
+};
+  const t = text => language === 'en' ? (EN[text] || text) : text;
+
   // Only appearance preferences are persisted. Conversation text stays in memory.
   const readPref = (name, fallback) => {
     try { return typeof GM_getValue === 'function' ? GM_getValue(name, fallback) : fallback; }
@@ -73,6 +110,7 @@
 
   const host = document.createElement('div');
   host.id = HOST_ID;
+  host.lang = language === 'zh' ? 'zh-CN' : 'en';
   // Shadow DOM prevents ChatGPT styles and our styles from affecting each other.
   const shadow = host.attachShadow({ mode: 'open' });
   const style = document.createElement('style');
@@ -97,7 +135,7 @@
       .icon { border-radius:7px; min-width:30px; height:30px; padding:4px; }
       .tools { padding:0 12px 9px; display:flex; gap:7px; }
       input { width:100%; min-width:0; padding:7px 9px; border:1px solid var(--line); border-radius:7px; background:var(--bg); }
-      select { max-width:90px; border:1px solid var(--line); border-radius:7px; background:var(--bg); }
+      select { max-width:112px; border:1px solid var(--line); border-radius:7px; background:var(--bg); }
       .stats { color:var(--muted); font-size:11px; padding:0 14px 8px; }
       nav { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; padding:0 7px 12px; scrollbar-width:thin; }
       .group { border-top:1px solid var(--line); padding:7px 0; }
@@ -141,26 +179,26 @@
     return el;
   };
   const panel = create('aside', 'panel');
-  panel.setAttribute('aria-label', 'ChatGPT 问答与章节导航');
+  panel.setAttribute('aria-label', t('ChatGPT 问答与章节导航'));
   const header = create('header');
-  const title = create('h2', 'title', '问答导航');
-  title.title = 'ChatGPT 问答与章节导航 v1.2.1';
+  const title = create('h2', 'title', t('问答导航'));
+  title.title = t('ChatGPT 问答与章节导航 v1.3.0');
   header.append(title);
-  header.append(makeButton('⇄', '切换导航栏位置', () => {
+  header.append(makeButton('⇄', t('切换导航栏位置'), () => {
     side = side === 'right' ? 'left' : 'right';
     writePref('side', side);
     syncAppearance();
   }));
-  header.append(makeButton('−', '收起导航栏', () => setOpened(false)));
+  header.append(makeButton('−', t('收起导航栏'), () => setOpened(false)));
   const tools = create('div', 'tools');
   const search = create('input');
   search.type = 'search';
-  search.placeholder = '搜索提问或章节';
-  search.setAttribute('aria-label', '搜索提问或章节');
+  search.placeholder = t('搜索提问或章节');
+  search.setAttribute('aria-label', t('搜索提问或章节'));
   search.addEventListener('input', () => { query = normalize(search.value); render(true); });
   const select = create('select');
-  select.setAttribute('aria-label', '目录显示范围');
-  for (const [value, label] of [['all', '问答章节'], ['questions', '仅提问']]) {
+  select.setAttribute('aria-label', t('目录显示范围'));
+  for (const [value, label] of [['all', t('问答章节')], ['questions', t('仅提问')]]) {
     const option = create('option', '', label);
     option.value = value;
     select.append(option);
@@ -170,26 +208,26 @@
   tools.append(search, select);
   const stats = create('div', 'stats');
   const list = create('nav');
-  list.setAttribute('aria-label', '对话目录');
+  list.setAttribute('aria-label', t('对话目录'));
   const footer = create('footer');
   const actions = create('div', 'footer-actions');
-  actions.append(makeButton('更早消息', '滚动到已载入消息的开头，以触发页面加载更早消息', () => {
+  actions.append(makeButton(t('更早消息'), t('滚动到已载入消息的开头，以触发页面加载更早消息'), () => {
     const first = sequence.map(key => records.get(key)).find(rec => locateMessage(rec));
     if (first) jump(first.key);
-    else showNotice('请先打开一个对话。');
+    else showNotice(t('请先打开一个对话。'));
   }, ''));
-  actions.append(makeButton('最新', '跳到最新已载入的消息', () => {
+  actions.append(makeButton(t('最新'), t('跳到最新已载入的消息'), () => {
     const last = sequence.map(key => records.get(key)).reverse().find(rec => locateMessage(rec));
     if (last) jump(last.key);
   }, ''));
-  actions.append(makeButton('刷新', '重新读取当前页面目录', () => refresh(), ''));
-  const help = create('div', '', '仅索引已载入/浏览过的消息；向上滚动可补充更早历史。');
+  actions.append(makeButton(t('刷新'), t('重新读取当前页面目录'), () => refresh(), ''));
+  const help = create('div', '', t('仅索引已载入/浏览过的消息；向上滚动可补充更早历史。'));
   const notice = create('div');
   notice.setAttribute('role', 'status');
   notice.setAttribute('aria-live', 'polite');
   footer.append(actions, help, notice);
   panel.append(header, tools, stats, list, footer);
-  const toggle = makeButton('☰ 目录', '打开问答导航（Alt+Shift+O）', () => setOpened(true), 'toggle');
+  const toggle = makeButton(t('☰ 目录'), t('打开问答导航（Alt+Shift+O）'), () => setOpened(true), 'toggle');
   toggle.setAttribute('aria-expanded', String(opened));
   const flash = create('div', 'flash');
   flash.hidden = true;
@@ -442,7 +480,7 @@
       })) : [];
       records.set(identity.key, {
         ...identity, role, text: role === 'user' ? text : '',
-        label: role === 'user' ? short(text || '图片 / 附件提问') : `回答${headings.length || !text ? '' : ' · ' + short(text, 58)}`,
+        label: role === 'user' ? short(text || t('图片 / 附件提问')) : `${t('回答')}${headings.length || !text ? '' : ' · ' + short(text, 58)}`,
         node: root, headings
       });
       observed.push(identity.key);
@@ -492,7 +530,9 @@
     });
     const questionCount = sequence.filter(key => records.get(key)?.role === 'user').length;
     const headingCount = sequence.reduce((n, key) => n + (records.get(key)?.headings.length || 0), 0);
-    stats.textContent = `已索引 ${questionCount} 个提问 · ${headingCount} 个章节`;
+    stats.textContent = language === 'zh'
+      ? `已索引 ${questionCount} 个提问 · ${headingCount} 个章节`
+      : `${questionCount} ${questionCount === 1 ? 'question' : 'questions'} · ${headingCount} ${headingCount === 1 ? 'heading' : 'headings'} indexed`;
     const signature = JSON.stringify([sequence.map(key => {
       const rec = records.get(key);
       return [key, rec.label, rec.text, rec.headings.map(h => [h.text, h.level])];
@@ -522,7 +562,7 @@
         const row = create('div', 'question-row');
         addGo(row, q, `${questionNumber}. ${q.label}`, 'question');
         if (mode === 'all' && group.answers.length) {
-          const fold = makeButton(collapsed ? '▸' : '▾', collapsed ? '展开回答章节' : '折叠回答章节', () => {
+          const fold = makeButton(collapsed ? '▸' : '▾', collapsed ? t('展开回答章节') : t('折叠回答章节'), () => {
             if (folded.has(groupKey)) folded.delete(groupKey); else folded.add(groupKey);
             render(true);
           }, 'fold');
@@ -543,7 +583,7 @@
       }
       fragment.append(section);
     }
-    if (!visibleGroups) fragment.append(create('div', 'empty', query ? '没有匹配的提问或章节' : '打开对话后，这里会显示提问和回答章节。'));
+    if (!visibleGroups) fragment.append(create('div', 'empty', query ? t('没有匹配的提问或章节') : t('打开对话后，这里会显示提问和回答章节。')));
     list.replaceChildren(fragment);
     list.scrollTop = previousScroll;
     if (focused) buttons.get(focused)?.focus({ preventScroll: true });
@@ -611,7 +651,7 @@
       }
     }
     if (serial !== jumpSerial) return;
-    if (!target) { showNotice('这条消息暂未挂载，请向上滚动加载历史后再点击。'); return; }
+    if (!target) { showNotice(t('这条消息暂未挂载，请向上滚动加载历史后再点击。')); return; }
     scrollToTarget(target);
     activeKey = entryKey(key, headingIndex);
     markActive();
@@ -673,3 +713,4 @@
   setInterval(() => { if (route !== location.pathname) refresh(); }, 700);
   refresh();
 })();
+
