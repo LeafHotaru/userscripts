@@ -42,9 +42,9 @@
   if (document.getElementById(HOST_ID)) return;
 
   // Prefer the ChatGPT UI language; fall back to the browser when it is absent.
-  // Language is chosen on page load. Refresh after changing ChatGPT's language.
+  // A saved manual choice overrides automatic language detection.
   const languageTag = document.documentElement.lang.trim() || navigator.language || 'en';
-  const language = /^zh(?:-|_|$)/i.test(languageTag) ? 'zh' : 'en';
+  let language = /^zh(?:-|_|$)/i.test(languageTag) ? 'zh' : 'en';
   const EN = {
     "ChatGPT 问答与章节导航": "ChatGPT Conversation Outline",
     "问答导航": "Conversation outline",
@@ -72,6 +72,7 @@
     "没有匹配的提问或章节": "No matching questions or headings",
     "打开对话后，这里会显示提问和回答章节。": "Open a conversation to see its questions and answer headings here.",
     "这条消息暂未挂载，请向上滚动加载历史后再点击。": "This message is not loaded. Scroll up to load its history, then try again.",
+    "切换语言": "Switch language",
     "回答": "Answer"
 };
   const t = text => language === 'en' ? (EN[text] || text) : text;
@@ -85,6 +86,8 @@
     try { if (typeof GM_setValue === 'function') GM_setValue(name, value); }
     catch { /* Navigation still works if extension storage is unavailable. */ }
   };
+  const savedLanguage = readPref('language', 'auto');
+  if (savedLanguage === 'zh' || savedLanguage === 'en') language = savedLanguage;
   let opened = Boolean(readPref('opened', window.innerWidth >= 1000));
   let side = readPref('side', 'right') === 'left' ? 'left' : 'right';
   let mode = readPref('mode', 'all') === 'questions' ? 'questions' : 'all';
@@ -184,6 +187,38 @@
   const title = create('h2', 'title', t('问答导航'));
   title.title = t('ChatGPT 问答与章节导航 v1.3.0');
   header.append(title);
+  const languageButton = makeButton('中文 / EN', t('切换语言'), () => {
+    const previousLanguage = language;
+    language = language === 'zh' ? 'en' : 'zh';
+    writePref('language', language);
+    host.lang = language === 'zh' ? 'zh-CN' : 'en';
+    const translate = value => {
+      if (language === 'en') return EN[value] || value;
+      return Object.keys(EN).find(key => EN[key] === value) || value;
+    };
+    // Update controls only; never translate the user's conversation or headings.
+    for (const element of shadow.querySelectorAll('*')) {
+      if (element.closest('nav') || element === style) continue;
+      for (const attr of ['title', 'aria-label', 'placeholder']) {
+        if (element.hasAttribute(attr)) element.setAttribute(attr, translate(element.getAttribute(attr)));
+      }
+      for (const child of element.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) child.nodeValue = translate(child.nodeValue);
+      }
+    }
+    for (const rec of records.values()) {
+      if (rec.role === 'assistant') {
+        const prefix = previousLanguage === 'zh' ? '回答' : EN['回答'];
+        if (rec.label.startsWith(prefix)) rec.label = t('回答') + rec.label.slice(prefix.length);
+      } else if (!rec.text) rec.label = t('图片 / 附件提问');
+    }
+    list.setAttribute('aria-label', t('对话目录'));
+    notice.textContent = '';
+    render(true);
+    refresh();
+  });
+  languageButton.classList.add('language-toggle');
+  header.append(languageButton);
   header.append(makeButton('⇄', t('切换导航栏位置'), () => {
     side = side === 'right' ? 'left' : 'right';
     writePref('side', side);
@@ -713,4 +748,5 @@
   setInterval(() => { if (route !== location.pathname) refresh(); }, 700);
   refresh();
 })();
+
 
